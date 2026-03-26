@@ -1,7 +1,7 @@
 import IframeLoader from './IframeLoader';
 
 export default function ReservationPage() {
-  return (
+    return (
     <div className="p-4 flex min-h-screen items-center justify-center bg-gray-950/3">
       <div className="p-1 max-w-lg h-[30rem] bg-white border rounded-2xl">
         <IframeLoader

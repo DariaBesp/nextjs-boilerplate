@@ -17,6 +17,12 @@ export default function Home() {
           >
             Login to Portal
           </Link>
+          <Link
+            href="/bookings"
+            className="rounded-xl bg-zinc-800 px-8 py-4 text-center text-lg font-semibold text-white shadow-lg transition hover:bg-zinc-900 hover:shadow-xl dark:bg-zinc-700 dark:hover:bg-zinc-600"
+          >
+            View Bookings
+          </Link>
         </div>
       </div>
     </div>
