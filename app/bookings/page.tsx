@@ -1,10 +1,13 @@
-import { Bookings } from "../components/Bookings";
+import { Bookings } from "../../components/block-components/Bookings";
+import { Box, Heading } from "@chakra-ui/react";
 
 export default function BookingsPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Добро пожаловать на страницу бронирований!</h1>
+    <Box p={10} bg="gray.100" minHeight="100vh">
+      <Heading size="xl" mb={4}>
+        Добро пожаловать на страницу бронирований!
+      </Heading>
       <Bookings />
-    </div>
+    </Box>
   );
 }
