@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Box } from "@chakra-ui/react";
 
 export default function PortalMainLayout({
   children,
@@ -6,8 +7,8 @@ export default function PortalMainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
+    <Box minH="100vh">
      {children}
-    </div>
+    </Box>
   );
 }

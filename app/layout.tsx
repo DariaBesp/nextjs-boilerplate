@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Provider } from "@/components/ui/provider"
 import { Geist, Geist_Mono } from "next/font/google";
+import { Box } from "@chakra-ui/react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,9 +27,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{
+          fontFamily: `${geistSans.style.fontFamily}, ${geistMono.style.fontFamily}`,
+        }}
       >
-        <Provider>{children}</Provider>
+        <Provider>
+          <Box minH="var(--app-min-height, 100vh)">
+            {children}
+          </Box>
+        </Provider>
       </body>
     </html>
   );
