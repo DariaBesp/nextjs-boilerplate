@@ -9,12 +9,48 @@ import {
   Portal,
   Select,
   Table,
+  Tabs,
+  Link,
+  Flex,
+  Pagination,
+  ButtonGroup,
+  IconButton,
+  InputGroup,
+  Input,
+  Button,
+  Center,
+  SegmentGroup,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { LuCalendar } from "react-icons/lu";
+import {
+  LuCalendar,
+  LuChevronLeft,
+  LuChevronRight,
+  LuFolder,
+  LuInfo,
+  LuSearch,
+  LuUser,
+} from "react-icons/lu";
+//import { ToggleTip } from "@/components/ui/toggle-tip";
+
+//перенести в utils
+const formatBookingId = (key?: string) => {
+  if (!key) return "";
+
+  const number = key.split("-")[1];
+  return number ? `#${number.padStart(3, "0")}` : "";
+};
+
+const formatShortDate = (isoDate?: string) => {
+  if (!isoDate) return "";
+  const parts = isoDate.split("T")[0].split("-"); // ["2026","03","31"]
+  const year = parts[0].slice(-2); // берем последние 2 цифры года
+  return `${parts[2]}.${parts[1]}.${year}`; // "31.03.26"
+};
 
 interface BookingType {
   id: string;
+  key: string;
   description: string | null;
   status?: { name: string };
   custom_fields: Record<string, any>;
@@ -27,6 +63,7 @@ export const Bookings = () => {
     dateRange: { from: null, to: null },
     search: "",
   });
+  // const [dateValue, setDateValue] = useState<string | null>("Неделя");
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -58,106 +95,123 @@ export const Bookings = () => {
 
   return (
     <Box p={4} bg="white" rounded="md" shadow="md">
-      <Heading size="lg" mb={4}>
-        Список бронирований
-      </Heading>
-      {/* Фильтрация */}
-      {/* Фильтр по статусу */}
-      <Box display="flex" flexDirection="row" gap={6}>
-        <Field.Root maxW="300px">
-          <Field.Label>Фильтр по статусу:</Field.Label>
-          <NativeSelect.Root>
-            <NativeSelect.Field
-              value={filters.status}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, status: e.target.value }))
-              }
-            >
-              <option value="all">Все</option>
-              <option value="Новая">Новая</option>
-              <option value="Подтверждена">Подтверждена</option>
-              <option value="Отменена">Отменена</option>
-            </NativeSelect.Field>
-          </NativeSelect.Root>
-        </Field.Root>
-        {/*Фильтр: выбор даты  */}
-        <DatePicker.Root selectionMode="range" maxWidth="20rem">
-          <DatePicker.Label>Фильтр по дате:</DatePicker.Label>
-          <DatePicker.Control>
-            <DatePicker.Input index={0} />
-            <DatePicker.Input index={1} />
-            <DatePicker.IndicatorGroup>
-              <DatePicker.Trigger>
-                <LuCalendar />
-              </DatePicker.Trigger>
-            </DatePicker.IndicatorGroup>
-          </DatePicker.Control>
-          <Portal>
-            <DatePicker.Positioner>
-              <DatePicker.Content>
-                <DatePicker.View view="day">
-                  <DatePicker.Header />
-                  <DatePicker.DayTable />
-                </DatePicker.View>
-                <DatePicker.View view="month">
-                  <DatePicker.Header />
-                  <DatePicker.MonthTable />
-                </DatePicker.View>
-                <DatePicker.View view="year">
-                  <DatePicker.Header />
-                  <DatePicker.YearTable />
-                </DatePicker.View>
-              </DatePicker.Content>
-            </DatePicker.Positioner>
-          </Portal>
-        </DatePicker.Root>
+      {/* Cссылка Домой и строка поиска */}
+      <Flex gap={4} justify={"space-between"} align={"center"}>
+        <Link href="#">Домой</Link>
+        <Flex gap={2} align={"center"}>
+          {/* <Field.Input placeholder="Поиск..." /> */}
+          <InputGroup flex="1" startElement={<LuSearch />}>
+            <Input placeholder="Поиск" />
+          </InputGroup>
+          {/* //<ToggleTip content="This is some additional information."> */}
+          <Button size="xs" variant="ghost">
+            <LuInfo />
+          </Button>
+          {/* </ToggleTip> */}
+        </Flex>
+      </Flex>
 
-        {/* посковая строка = input + svg */}
-      </Box>
+      {/* tooltip или popover или toggle tip */}
+      <Heading size="lg" mb={4}>
+        Входящие заявки
+      </Heading>
+      <Flex gap={4} mb={4} align={"start"} justify={"space-between"}>
+        <Tabs.Root defaultValue="all">
+          <Tabs.List>
+            <Tabs.Trigger value="all">Все</Tabs.Trigger>
+            <Tabs.Trigger value="Новые">
+              <LuFolder />
+              Новая
+            </Tabs.Trigger>
+            <Tabs.Trigger value="Нет ответа">Нет ответа</Tabs.Trigger>
+            <Tabs.Trigger value="Отмененные">Отмененные</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="all">будут все заявки</Tabs.Content>
+          <Tabs.Content value="Новые">будут новые заявки</Tabs.Content>
+          <Tabs.Content value="Нет ответа">
+            будут заявки, по которым нет ответа от клиента (статус "Нет ответа")
+          </Tabs.Content>
+          <Tabs.Content value="Отмененные">
+            будут отмененные заявки
+          </Tabs.Content>
+        </Tabs.Root>
+
+        <Box>
+          <SegmentGroup.Root
+          // value={dateValue}
+          // onValueChange={(e) => setDateValue(e.value)}
+          >
+            <SegmentGroup.Indicator />
+            <SegmentGroup.Items items={["Сегодня", "Вчера", "Неделя"]} />
+          </SegmentGroup.Root>
+        </Box>
+      </Flex>
 
       {/* Таблица */}
-      <Table.Root size="sm">
+      <Table.Root size="sm" marginBottom={5}>
         <Table.Header>
-          <Table.Row>
+          <Table.Row bg="bg.default">
+            <Table.ColumnHeader>ID</Table.ColumnHeader>
             <Table.ColumnHeader>Имя</Table.ColumnHeader>
-            <Table.ColumnHeader>Телефон</Table.ColumnHeader>
-            <Table.ColumnHeader>Количество гостей</Table.ColumnHeader>
+            <Table.ColumnHeader>Номер телефона</Table.ColumnHeader>
             <Table.ColumnHeader>Дата</Table.ColumnHeader>
+            <Table.ColumnHeader>Время</Table.ColumnHeader>
+            <Table.ColumnHeader>Гости</Table.ColumnHeader>
+            <Table.ColumnHeader>Пожелания</Table.ColumnHeader>
             <Table.ColumnHeader>Статус</Table.ColumnHeader>
-            <Table.ColumnHeader>Комментарий</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {bookings.map((item: BookingType) => (
             <Table.Row key={item.id}>
+              <Table.Cell>{formatBookingId(item.key)}</Table.Cell>
               <Table.Cell>
-                {item.custom_fields["cf_client.first_name"]}
+                {item.custom_fields.cf_client?.first_name}
               </Table.Cell>
-              <Table.Cell>{item.custom_fields["cf_contact.phone"]}</Table.Cell>
+              <Table.Cell>{item.custom_fields.cf_contact?.phone}</Table.Cell>
+              <Table.Cell>
+                {formatShortDate(item.custom_fields.cf_visit_date)}
+              </Table.Cell>
+              <Table.Cell>
+                {" "}
+                {item.custom_fields.cf_visit_time
+                  ? `${item.custom_fields.cf_visit_time.hours}:${item.custom_fields.cf_visit_time.minutes}`
+                  : ""}
+              </Table.Cell>
               <Table.Cell>{item.custom_fields.cf_guests}</Table.Cell>
-              <Table.Cell>{item.custom_fields.cf_visit_date}</Table.Cell>
-              <Table.Cell>{item.status?.name}</Table.Cell>
               <Table.Cell>{item.description}</Table.Cell>
+              <Table.Cell>{item.status?.name}</Table.Cell>
             </Table.Row>
           ))}
         </Table.Body>
       </Table.Root>
+
+      <Pagination.Root count={20} pageSize={2} defaultPage={1}>
+        <ButtonGroup variant="ghost" size="sm">
+          <Pagination.PrevTrigger asChild>
+            <IconButton>
+              <LuChevronLeft />
+            </IconButton>
+          </Pagination.PrevTrigger>
+
+          <Pagination.Items
+            render={(page) => (
+              <IconButton
+                colorPalette={"blue"}
+                variant={{ base: "outline", _selected: "solid" }}
+              >
+                {page.value}
+              </IconButton>
+            )}
+          />
+
+          <Pagination.NextTrigger asChild>
+            <IconButton>
+              <LuChevronRight />
+            </IconButton>
+          </Pagination.NextTrigger>
+        </ButtonGroup>
+      </Pagination.Root>
     </Box>
   );
-
-  // return (
-  //   <div>
-  //     <h2>Список бронирований</h2>
-  //     {bookings.map((item: BookingType) => (
-  //       <div key={item.id}>
-  //         <p>Имя: {item.custom_fields["cf_client.first_name"]}</p>
-  //         <p>Телефон: {item.custom_fields["cf_contact.phone"]}</p>
-  //         <p>Гостей: {item.custom_fields.cf_guests}</p>
-  //         <p>Дата: {item.custom_fields.cf_visit_date}</p>
-  //         <p>Комментарий: {item.description}</p>
-  //         <p>Статус: {item.status?.name}</p>
-  //       </div>
-  //     ))}
-  //   </div>
-  // );
 };
