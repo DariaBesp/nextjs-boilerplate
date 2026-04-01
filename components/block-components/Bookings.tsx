@@ -17,6 +17,13 @@ import {
   SegmentGroup,
   Icon,
   Center,
+  Badge,
+  MenuRoot,
+  MenuTrigger,
+  MenuContent,
+  MenuItem,
+  Portal,
+  MenuPositioner,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import {
@@ -44,11 +51,20 @@ const formatShortDate = (isoDate?: string) => {
   return `${parts[2]}.${parts[1]}.${year}`; // "31.03.26"
 };
 
+//Value нет. "status": {
+// "name": "Новая",
+const statusMap: Record<string, { label: string; color: string }> = {
+  Новая: { label: "Новая", color: "blue" },
+  Отмена: { label: "Отмена", color: "red" },
+  Нет_ответа: { label: "Нет ответа", color: "orange" },
+  Подтверждено: { label: "Подтверждено", color: "green" },
+};
+
 interface BookingType {
   id: string;
   key: string;
   description: string | null;
-  status?: { name: string };
+  status: { name: string };
   custom_fields: Record<string, any>;
 }
 
@@ -113,7 +129,7 @@ export const Bookings = () => {
         <Flex gap={2} align={"center"}>
           {/* <Field.Input placeholder="Поиск..." /> */}
           <InputGroup flex="1" startElement={<LuSearch />} w={400}>
-            <Input placeholder="Поиск" />
+            <Input bg="white" placeholder="Поиск" />
           </InputGroup>
           {/* //<ToggleTip content="This is some additional information."> */}
           <Button size="xs" variant="ghost">
@@ -244,9 +260,9 @@ export const Bookings = () => {
       </Flex>
 
       {/* Таблица */}
-      <Table.Root size="sm" marginBottom={5}>
+      <Table.Root size="md" marginBottom={5}>
         <Table.Header>
-          <Table.Row bg="bg.default">
+          <Table.Row bg="bg.default" h="56px">
             <Table.ColumnHeader>ID</Table.ColumnHeader>
             <Table.ColumnHeader>Имя</Table.ColumnHeader>
             <Table.ColumnHeader>Номер телефона</Table.ColumnHeader>
@@ -258,27 +274,58 @@ export const Bookings = () => {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {bookings.map((item: BookingType) => (
-            <Table.Row key={item.id}>
-              <Table.Cell>{formatBookingId(item.key)}</Table.Cell>
-              <Table.Cell>
-                {item.custom_fields.cf_client?.first_name}
-              </Table.Cell>
-              <Table.Cell>{item.custom_fields.cf_contact?.phone}</Table.Cell>
-              <Table.Cell>
-                {formatShortDate(item.custom_fields.cf_visit_date)}
-              </Table.Cell>
-              <Table.Cell>
-                {" "}
-                {item.custom_fields.cf_visit_time
-                  ? `${item.custom_fields.cf_visit_time.hours}:${item.custom_fields.cf_visit_time.minutes}`
-                  : ""}
-              </Table.Cell>
-              <Table.Cell>{item.custom_fields.cf_guests}</Table.Cell>
-              <Table.Cell>{item.description}</Table.Cell>
-              <Table.Cell>{item.status?.name}</Table.Cell>
-            </Table.Row>
-          ))}
+          {bookings.map((item: BookingType) => {
+            const isNewStatus = item.status.name === "Новая";
+
+            return (
+              <Table.Row
+                key={item.id}
+                h="56px"
+                bg={item.status.name === "Новая" ? "#EEF0F5" : "#F5F6F9"}
+              >
+                <Table.Cell>{formatBookingId(item.key)}</Table.Cell>
+                <Table.Cell>
+                  {item.custom_fields.cf_client?.first_name}
+                </Table.Cell>
+                <Table.Cell>{item.custom_fields.cf_contact?.phone}</Table.Cell>
+                <Table.Cell>
+                  {formatShortDate(item.custom_fields.cf_visit_date)}
+                </Table.Cell>
+                <Table.Cell>
+                  {" "}
+                  {item.custom_fields.cf_visit_time
+                    ? `${item.custom_fields.cf_visit_time.hours}:${item.custom_fields.cf_visit_time.minutes}`
+                    : ""}
+                </Table.Cell>
+                <Table.Cell>{item.custom_fields.cf_guests}</Table.Cell>
+                <Table.Cell>{item.description || "-"}</Table.Cell>
+                <Table.Cell>
+                  <MenuRoot>
+                    <MenuTrigger asChild>
+                      <Badge
+                        as="button"
+                        cursor="pointer"
+                        colorPalette={
+                          statusMap[item.status.name]?.color || "gray"
+                        }
+                      >
+                        {item.status.name}
+                      </Badge>
+                    </MenuTrigger>
+                    <Portal>
+                      <MenuPositioner>
+                        <MenuContent>
+                          <MenuItem value="cancelled">Отмена</MenuItem>
+                          <MenuItem value="no_answer">Нет ответа</MenuItem>
+                          <MenuItem value="confirmed">Подтверждено</MenuItem>
+                        </MenuContent>
+                      </MenuPositioner>
+                    </Portal>
+                  </MenuRoot>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
         </Table.Body>
       </Table.Root>
 
