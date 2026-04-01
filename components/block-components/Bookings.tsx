@@ -16,6 +16,7 @@ import {
   Button,
   SegmentGroup,
   Icon,
+  Center,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import {
@@ -25,6 +26,7 @@ import {
   LuSearch,
   LuUser,
 } from "react-icons/lu";
+import { DatePickerCustom } from "./DatePickerCustom";
 //import { ToggleTip } from "@/components/ui/toggle-tip";
 
 //перенести в utils
@@ -88,7 +90,7 @@ export const Bookings = () => {
   }, []);
 
   return (
-    <Box p={4} bg="white" rounded="md" shadow="md">
+    <Box px={6} py={4}>
       {/* Cссылка icon-home и строка поиска */}
       <Flex gap={4} justify={"space-between"} align={"center"}>
         <Link href="#">
@@ -101,9 +103,9 @@ export const Bookings = () => {
               <path
                 d="M10 14V8.66667C10 8.48986 9.92976 8.32029 9.80474 8.19526C9.67971 8.07024 9.51014 8 9.33333 8H6.66667C6.48986 8 6.32029 8.07024 6.19526 8.19526C6.07024 8.32029 6 8.48986 6 8.66667V14M2 6.66667C1.99995 6.47271 2.04222 6.28108 2.12386 6.10515C2.20549 5.92921 2.32453 5.7732 2.47267 5.648L7.13933 1.64867C7.37999 1.44527 7.6849 1.33368 8 1.33368C8.3151 1.33368 8.62001 1.44527 8.86067 1.64867L13.5273 5.648C13.6755 5.7732 13.7945 5.92921 13.8761 6.10515C13.9578 6.28108 14 6.47271 14 6.66667V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V6.66667Z"
                 stroke="#A1A1AA"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </Icon>
@@ -229,7 +231,7 @@ export const Bookings = () => {
           </Tabs.List>
         </Tabs.Root>
 
-        <Box>
+        <Box display="flex" gap={3} alignItems="center">
           <SegmentGroup.Root
             value={dateValue}
             onValueChange={(e) => setDateValue(e.value)}
@@ -237,6 +239,7 @@ export const Bookings = () => {
             <SegmentGroup.Indicator />
             <SegmentGroup.Items items={["Сегодня", "Вчера", "Неделя"]} />
           </SegmentGroup.Root>
+          <DatePickerCustom />
         </Box>
       </Flex>
 
