@@ -25,7 +25,7 @@ import {
   Portal,
   MenuPositioner,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LuChevronLeft,
   LuChevronRight,
@@ -34,6 +34,8 @@ import {
   LuUser,
 } from "react-icons/lu";
 import { DatePickerCustom } from "./DatePickerCustom";
+import { StatusConfig } from "./typesBookings";
+import { STATUS_KEYS, statusMap } from "./dataBookings";
 //import { ToggleTip } from "@/components/ui/toggle-tip";
 
 //перенести в utils
@@ -51,15 +53,6 @@ const formatShortDate = (isoDate?: string) => {
   return `${parts[2]}.${parts[1]}.${year}`; // "31.03.26"
 };
 
-//Value нет. "status": {
-// "name": "Новая",
-const statusMap: Record<string, { label: string; color: string }> = {
-  Новая: { label: "Новая", color: "blue" },
-  Отмена: { label: "Отмена", color: "red" },
-  Нет_ответа: { label: "Нет ответа", color: "orange" },
-  Подтверждено: { label: "Подтверждено", color: "green" },
-};
-
 interface BookingType {
   id: string;
   key: string;
@@ -69,12 +62,15 @@ interface BookingType {
 }
 
 export const Bookings = () => {
+  //сохранение массива бронирований
   const [bookings, setBookings] = useState([]);
+  //для фильтрации массива и соритровки
   const [filters, setFilters] = useState({
     status: "all",
     dateRange: { from: null, to: null },
     search: "",
   });
+  //для Tabs кнопок: "сегодня, вчера и неделя"
   const [dateValue, setDateValue] = useState<string | null>("Неделя");
 
   useEffect(() => {
@@ -105,11 +101,24 @@ export const Bookings = () => {
     fetchBookings();
   }, []);
 
+  // Фильтруем массив bookings на основе выбранного значения в filters.status
+  const filteredBookings = useMemo(() => {
+    if (filters.status === "all") {
+      return bookings;
+    }
+    return bookings.filter((item: any) => item.status.name === filters.status);
+  }, [bookings, filters.status]);
+
+  // Функция для удобного переключения статуса
+  const handleStatusChange = (details: { value: string }) => {
+    setFilters((prev) => ({ ...prev, status: details.value }));
+  };
+
   return (
     <Box px={6} py={4}>
       {/* Cссылка icon-home и строка поиска */}
       <Flex gap={4} justify={"space-between"} align={"center"}>
-        <Link href="#">
+        <Link href="/">
           <Icon size="sm">
             <svg
               viewBox="0 0 16 16"
@@ -129,10 +138,16 @@ export const Bookings = () => {
         <Flex gap={2} align={"center"}>
           {/* <Field.Input placeholder="Поиск..." /> */}
           <InputGroup flex="1" startElement={<LuSearch />} w={400}>
-            <Input bg="white" placeholder="Поиск" />
+            <Input bg="white" placeholder="Поиск" borderColor="white" />
           </InputGroup>
-          {/* //<ToggleTip content="This is some additional information."> */}
-          <Button size="xs" variant="ghost">
+          <Button
+            size="xs"
+            variant="ghost"
+            bgColor="#DBEAFE"
+            h={10}
+            w={10}
+            colorPalette="blue"
+          >
             <LuInfo />
           </Button>
           {/* </ToggleTip> */}
@@ -150,7 +165,13 @@ export const Bookings = () => {
         justify={"space-between"}
         marginBottom={5}
       >
-        <Tabs.Root size="lg" colorPalette="blue" defaultValue="all">
+        <Tabs.Root
+          size="lg"
+          colorPalette="blue"
+          value={filters.status}
+          defaultValue="all"
+          onValueChange={handleStatusChange}
+        >
           <Tabs.List>
             <Tabs.Trigger value="all" _selected={{ color: "blue.500" }}>
               <Icon size="sm">
@@ -175,7 +196,10 @@ export const Bookings = () => {
               </Icon>
               <Text fontSize="md">Все</Text>
             </Tabs.Trigger>
-            <Tabs.Trigger value="Новые" _selected={{ color: "blue.500" }}>
+            <Tabs.Trigger
+              value={STATUS_KEYS.NEW}
+              _selected={{ color: "blue.500" }}
+            >
               <Icon size="sm">
                 <svg
                   viewBox="0 0 16 15"
@@ -198,7 +222,10 @@ export const Bookings = () => {
               </Icon>
               <Text fontSize="md">Новые</Text>
             </Tabs.Trigger>
-            <Tabs.Trigger value="Нет ответа" _selected={{ color: "blue.500" }}>
+            <Tabs.Trigger
+              value={STATUS_KEYS.NO_ANSWER}
+              _selected={{ color: "blue.500" }}
+            >
               <Icon size="sm">
                 <svg
                   viewBox="0 0 16 15"
@@ -221,7 +248,10 @@ export const Bookings = () => {
               </Icon>
               <Text fontSize="md">Нет ответа</Text>
             </Tabs.Trigger>
-            <Tabs.Trigger value="Отмененные" _selected={{ color: "blue.500" }}>
+            <Tabs.Trigger
+              value={STATUS_KEYS.CANCELLED}
+              _selected={{ color: "blue.500" }}
+            >
               <Icon size="sm">
                 <svg
                   viewBox="0 0 16 15"
@@ -274,62 +304,80 @@ export const Bookings = () => {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {bookings.map((item: BookingType) => {
-            const isNewStatus = item.status.name === "Новая";
+          {filteredBookings.length > 0 ? (
+            filteredBookings.map((item: BookingType) => {
+              const statusConfig = statusMap[item.status.name];
 
-            return (
-              <Table.Row
-                key={item.id}
-                h="56px"
-                bg={item.status.name === "Новая" ? "#EEF0F5" : "#F5F6F9"}
-              >
-                <Table.Cell>{formatBookingId(item.key)}</Table.Cell>
-                <Table.Cell>
-                  {item.custom_fields.cf_client?.first_name}
-                </Table.Cell>
-                <Table.Cell>{item.custom_fields.cf_contact?.phone}</Table.Cell>
-                <Table.Cell>
-                  {formatShortDate(item.custom_fields.cf_visit_date)}
-                </Table.Cell>
-                <Table.Cell>
-                  {" "}
-                  {item.custom_fields.cf_visit_time
-                    ? `${item.custom_fields.cf_visit_time.hours}:${item.custom_fields.cf_visit_time.minutes}`
-                    : ""}
-                </Table.Cell>
-                <Table.Cell>{item.custom_fields.cf_guests}</Table.Cell>
-                <Table.Cell>{item.description || "-"}</Table.Cell>
-                <Table.Cell>
-                  <MenuRoot>
-                    <MenuTrigger asChild>
-                      <Badge
-                        as="button"
-                        cursor="pointer"
-                        colorPalette={
-                          statusMap[item.status.name]?.color || "gray"
-                        }
-                      >
-                        {item.status.name}
-                      </Badge>
-                    </MenuTrigger>
-                    <Portal>
-                      <MenuPositioner>
-                        <MenuContent>
-                          <MenuItem value="cancelled">Отмена</MenuItem>
-                          <MenuItem value="no_answer">Нет ответа</MenuItem>
-                          <MenuItem value="confirmed">Подтверждено</MenuItem>
-                        </MenuContent>
-                      </MenuPositioner>
-                    </Portal>
-                  </MenuRoot>
-                </Table.Cell>
-              </Table.Row>
-            );
-          })}
+              return (
+                <Table.Row key={item.id} h="56px" bg={statusConfig.bg}>
+                  <Table.Cell>{formatBookingId(item.key)}</Table.Cell>
+                  <Table.Cell>
+                    {item.custom_fields.cf_client?.first_name}
+                  </Table.Cell>
+                  <Table.Cell>
+                    {item.custom_fields.cf_contact?.phone}
+                  </Table.Cell>
+                  <Table.Cell>
+                    {formatShortDate(item.custom_fields.cf_visit_date)}
+                  </Table.Cell>
+                  <Table.Cell>
+                    {" "}
+                    {item.custom_fields.cf_visit_time
+                      ? `${item.custom_fields.cf_visit_time.hours}:${item.custom_fields.cf_visit_time.minutes}`
+                      : ""}
+                  </Table.Cell>
+                  <Table.Cell>{item.custom_fields.cf_guests}</Table.Cell>
+                  <Table.Cell>{item.description || "-"}</Table.Cell>
+                  <Table.Cell>
+                    <MenuRoot>
+                      <MenuTrigger asChild>
+                        <Badge
+                          as="button"
+                          cursor="pointer"
+                          h={6}
+                          borderRadius={16}
+                          colorPalette={
+                            statusMap[item.status.name]?.color || "gray"
+                          }
+                        >
+                          {statusMap[item.status.name]?.label ||
+                            item.status.name}
+                        </Badge>
+                      </MenuTrigger>
+                      <Portal>
+                        <MenuPositioner>
+                          <MenuContent>
+                            {Object.entries(statusMap)
+                              // 1. Фильтруем: оставляем только те статусы, которые НЕ "Новая"
+                              .filter(([key]) => key !== "Новая")
+                              .map(([key, config]) => (
+                                <MenuItem
+                                  key={key}
+                                  value={key}
+                                  _hover={{ bg: "gray.100" }}
+                                >
+                                  {config.label}
+                                </MenuItem>
+                              ))}
+                          </MenuContent>
+                        </MenuPositioner>
+                      </Portal>
+                    </MenuRoot>
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })
+          ) : (
+            <Table.Row>
+              <Table.Cell colSpan={8} textAlign="center" py={10}>
+                Заявок с таким статусом не найдено
+              </Table.Cell>
+            </Table.Row>
+          )}
         </Table.Body>
       </Table.Root>
 
-      <Pagination.Root count={20} pageSize={2} defaultPage={1}>
+      <Pagination.Root count={10} pageSize={2} defaultPage={1}>
         <ButtonGroup variant="ghost" size="sm">
           <Pagination.PrevTrigger asChild>
             <IconButton>
@@ -341,7 +389,13 @@ export const Bookings = () => {
             render={(page) => (
               <IconButton
                 colorPalette={"blue"}
-                variant={{ base: "outline", _selected: "solid" }}
+                _selected={{
+                  bg: "blue.600",
+                  color: "white",
+                  borderRadius: "lg",
+                }}
+                color="#27272A"
+                variant="ghost"
               >
                 {page.value}
               </IconButton>
