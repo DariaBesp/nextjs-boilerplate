@@ -103,11 +103,22 @@ export const Bookings = () => {
 
   // Фильтруем массив bookings на основе выбранного значения в filters.status
   const filteredBookings = useMemo(() => {
-    if (filters.status === "all") {
-      return bookings;
-    }
-    return bookings.filter((item: any) => item.status.name === filters.status);
-  }, [bookings, filters.status]);
+    return bookings.filter((item: any) => {
+      // 1. Фильтрация по статусу
+      const matchesStatus =
+        filters.status === "all" || item.status.name === filters.status;
+
+      // 2. Фильтрация по поиску (имя или телефон)
+      const searchTerm = filters.search.toLowerCase().trim();
+      const firstName =
+        item.custom_fields?.cf_client?.first_name?.toLowerCase() || "";
+      const phone = item.custom_fields?.cf_contact?.phone || "";
+      const matchesSearch =
+        firstName.includes(searchTerm) || phone.includes(searchTerm);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [bookings, filters.status, filters.search]);
 
   // Функция для удобного переключения статуса
   const handleStatusChange = (details: { value: string }) => {
@@ -138,9 +149,17 @@ export const Bookings = () => {
         <Flex gap={2} align={"center"}>
           {/* <Field.Input placeholder="Поиск..." /> */}
           <InputGroup flex="1" startElement={<LuSearch />} w={400}>
-            <Input bg="white" placeholder="Поиск" borderColor="white" />
+            <Input
+              bg="white"
+              placeholder="Поиск"
+              borderColor="white"
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, search: e.target.value }))
+              }
+            />
           </InputGroup>
-          <Button
+          {/* <Button
             size="xs"
             variant="ghost"
             bgColor="#DBEAFE"
@@ -149,13 +168,13 @@ export const Bookings = () => {
             colorPalette="blue"
           >
             <LuInfo />
-          </Button>
+          </Button> */}
           {/* </ToggleTip> */}
         </Flex>
       </Flex>
 
       {/* tooltip или popover или toggle tip */}
-      <Heading size="lg" mb={4}>
+      <Heading size="3xl" mb={4}>
         Входящие заявки
       </Heading>
       <Flex
@@ -283,7 +302,7 @@ export const Bookings = () => {
             onValueChange={(e) => setDateValue(e.value)}
           >
             <SegmentGroup.Indicator />
-            <SegmentGroup.Items items={["Сегодня", "Вчера", "Неделя"]} />
+            <SegmentGroup.Items items={["Сегодня", "Завтра", "Неделя"]} />
           </SegmentGroup.Root>
           <DatePickerCustom />
         </Box>
@@ -306,6 +325,7 @@ export const Bookings = () => {
         <Table.Body>
           {filteredBookings.length > 0 ? (
             filteredBookings.map((item: BookingType) => {
+              //визуал для статусов
               const statusConfig = statusMap[item.status.name];
 
               return (
@@ -318,13 +338,15 @@ export const Bookings = () => {
                     {item.custom_fields.cf_contact?.phone}
                   </Table.Cell>
                   <Table.Cell>
-                    {formatShortDate(item.custom_fields.cf_visit_date)}
+                    {item.custom_fields.cf_visit_date
+                      ? formatShortDate(item.custom_fields.cf_visit_date)
+                      : "Дата не выбрана"}
                   </Table.Cell>
                   <Table.Cell>
                     {" "}
                     {item.custom_fields.cf_visit_time
-                      ? `${item.custom_fields.cf_visit_time.hours}:${item.custom_fields.cf_visit_time.minutes}`
-                      : ""}
+                      ? `${String(item.custom_fields.cf_visit_time.hours).padStart(2, "0")}:${String(item.custom_fields.cf_visit_time.minutes).padStart(2, "0")}`
+                      : "Время не выбрано"}
                   </Table.Cell>
                   <Table.Cell>{item.custom_fields.cf_guests}</Table.Cell>
                   <Table.Cell>{item.description || "-"}</Table.Cell>
